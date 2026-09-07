@@ -1,0 +1,11 @@
+import {Router} from "express";
+import Product from "../models/Product.js";
+import User from "../models/User.js";
+import {protect,roles} from "../middleware/auth.js";
+const router=Router();
+router.get("/",async(req,res,next)=>{try{const f={};if(req.query.category)f.category=req.query.category;if(req.query.search)f.name={$regex:req.query.search,$options:"i"};res.json(await Product.find(f).populate("farmer","name email location verified").sort({createdAt:-1}));}catch(e){next(e)}});
+router.get("/:id",async(req,res,next)=>{try{const p=await Product.findById(req.params.id).populate("farmer","name email location verified");if(!p)return res.status(404).json({message:"Product not found"});res.json(p);}catch(e){next(e)}});
+router.post("/",protect,roles("farmer"),async(req,res,next)=>{try{const {name,category,price,unit="kg",stock,image,organic=false,description}=req.body;if(!name||!category||Number(price)<0||Number(stock)<0)return res.status(400).json({message:"Name, category, valid price and stock are required"});const farmer=await User.findById(req.user._id);const product=await Product.create({name,category,description,price:Number(price),unit,stock:Number(stock),image,organic:Boolean(organic),farmer:req.user._id,location:farmer?.location});res.status(201).json(product);}catch(e){next(e)}});
+router.put("/:id",protect,roles("farmer","admin"),async(req,res,next)=>{try{const p=await Product.findById(req.params.id);if(!p)return res.status(404).json({message:"Product not found"});if(req.user.role==="farmer"&&p.farmer.toString()!==req.user._id.toString())return res.status(403).json({message:"Not your product"});const allowed=["name","category","description","price","unit","stock","image","organic","location"];for(const k of allowed)if(req.body[k]!==undefined)p[k]=req.body[k];await p.save();res.json(p);}catch(e){next(e)}});
+router.delete("/:id",protect,roles("farmer","admin"),async(req,res,next)=>{try{const p=await Product.findById(req.params.id);if(!p)return res.status(404).json({message:"Product not found"});if(req.user.role==="farmer"&&p.farmer.toString()!==req.user._id.toString())return res.status(403).json({message:"Not your product"});await p.deleteOne();res.json({message:"Product deleted"});}catch(e){next(e)}});
+export default router;

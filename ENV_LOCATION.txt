@@ -1,0 +1,9 @@
+MongoDB environment setup
+==========================
+The server now loads BOTH of these locations:
+
+1. FarmDirect-final-home-ui/.env
+2. FarmDirect-final-home-ui/backend/.env
+
+If MONGODB_URI exists in both, backend/.env takes priority.
+Use your original working MONGODB_URI exactly as it was.

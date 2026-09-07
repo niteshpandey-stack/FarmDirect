@@ -1,0 +1,13 @@
+import {Router} from "express";
+import {protect,roles} from "../middleware/auth.js";
+import {nearbyPartners,assignPartner,partnerLocation,myAssignments,updateAssignmentStatus,tracking,listPartners,createPartner} from "../controllers/delivery.controller.js";
+const router=Router();
+router.get("/nearby",protect,roles("farmer","admin"),nearbyPartners);
+router.get("/partners",protect,roles("admin"),listPartners);
+router.post("/partners",protect,roles("admin"),createPartner);
+router.post("/assign",protect,roles("farmer","admin"),assignPartner);
+router.get("/my-assignments",protect,roles("delivery_partner"),myAssignments);
+router.patch("/location",protect,roles("delivery_partner"),partnerLocation);
+router.patch("/assignments/:id/status",protect,roles("delivery_partner","admin"),updateAssignmentStatus);
+router.get("/orders/:id/tracking",protect,roles("buyer","farmer","admin","delivery_partner"),tracking);
+export default router;
